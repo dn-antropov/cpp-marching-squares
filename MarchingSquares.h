@@ -1,3 +1,5 @@
+// Code needs to be rewritten to exclude functions from the header (better approach to life)
+
 /**
  * A simple implementation of the marching squares algorithm that can identify
  * perimeters in an supplied byte array. The array of data over which this
@@ -55,7 +57,8 @@ namespace MarchingSquares {
      * @throws std::runtime_error
      *             if there is no perimeter at the specified initial point.
      */
-    
+
+    inline
     Result FindPerimeter(int initialX, int initialY, int width, int height, unsigned char* data) {
         if (initialX < 0) initialX = 0;
         if (initialX > width) initialX = width;
@@ -120,7 +123,7 @@ namespace MarchingSquares {
      * 
      * @return a perimeter path obtained from the data, or null
      */
-
+    inline
     Result FindPerimeter(int width, int height, unsigned char* data) {
         int size = width * height;
         for (int i = 0; i < size; i++) {

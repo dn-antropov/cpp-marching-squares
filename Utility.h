@@ -10,13 +10,13 @@
 #pragma once
 
 namespace MarchingSquares {
-
+    inline
     bool isSet(int x, int y, int width, int height, unsigned char* data) {
         return x <= 0 || x > width || y <= 0 || y > height
             ? false
             : data[(y - 1) * width + (x - 1)] != 0;
     }
-	
+	inline
     int value(int x, int y, int width, int height, unsigned char* data) {
         int sum = 0;
         if (isSet(x, y, width, height, data)) sum |= 1;
