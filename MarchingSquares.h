@@ -8,7 +8,7 @@
  * the object is in use. It is expected that the data elements supplied to the
  * algorithm have already been thresholded. The algorithm only distinguishes
  * between zero and non-zero values.
- * 
+ *
  * @author Tom Gibara
  * Ported to C++ by Juha Reunanen
  *
@@ -20,6 +20,7 @@
 #include "Utility.h"
 #include <vector>
 #include <sstream>
+#include <queue>
 
 namespace MarchingSquares {
 
@@ -120,7 +121,7 @@ namespace MarchingSquares {
      * which this object was constructed. If there is no perimeter (ie. if all
      * elements of the supplied array are identically zero) then null is
      * returned.
-     * 
+     *
      * @return a perimeter path obtained from the data, or null
      */
     inline
@@ -133,6 +134,89 @@ namespace MarchingSquares {
         }
         Result result;
         return result;
+    }
+
+    inline
+    int FloodFill(int width, int height, unsigned char* data, std::vector<bool>& visited, const Result& perimeter) {
+        int x = perimeter.initialX;
+        int y = perimeter.initialY;
+        int filled = 0;
+
+        for (const Direction& dir : perimeter.directions) {
+            int inX = x + dir.y;
+            int inY = y - dir.x;
+
+            if (inX >= 0 && inX < width && inY >= 0 && inY < height) {
+
+                int idx = inY * width + inX;
+                if (data[idx] != 0 && !visited[idx]) {
+                    std::queue<std::pair<int, int>> q;
+                    q.push({inX, inY});
+
+                    while (!q.empty()) {
+                        auto [cx, cy] = q.front();
+                        q.pop();
+
+                        if (cx < 0 || cx >= width || cy < 0 || cy >= height) continue;
+
+                        int cidx = cy * width + cx;
+                        if (visited[cidx] || data[cidx] == 0) continue;
+
+                        visited[cidx] = true;
+                        filled++;
+
+                        q.push({cx + 1, cy});
+                        q.push({cx - 1, cy});
+                        q.push({cx, cy + 1});
+                        q.push({cx, cy - 1});
+                    }
+
+                    break;
+                }
+            }
+
+            x += dir.x;
+            y -= dir.y;
+        }
+        return filled;
+    }
+
+
+    inline
+    std::vector<Result> FindPerimeters(int width, int height, int minSize, unsigned char* data) {
+        std::vector<Result> results;
+        std::vector<bool> visited(width * height, false);
+
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                int idx = y * width + x;
+                if (data[idx] == 0 || visited[idx])
+                    continue;
+                try {
+                    Result perimeter = FindPerimeter(x, y, width, height, data);
+
+                    // Mark perimeter pixels as visited
+                    int px = perimeter.initialX;
+                    int py = perimeter.initialY;
+                    for (const Direction& dir : perimeter.directions) {
+                        if (px >= 0 && px < width && py >= 0 && py < height) {
+                            visited[py * width + px] = true;
+                        }
+                        px += dir.x;
+                        py -= dir.y;
+                    }
+
+                    int size = FloodFill(width, height, data, visited, perimeter);
+                    if (size >= minSize) {
+                        results.push_back(perimeter);
+
+                    }
+                } catch (const std::runtime_error&) {
+                    // If no perimeter found at this point, continue to next cell
+                }
+            }
+        }
+        return results;
     }
 
 }
